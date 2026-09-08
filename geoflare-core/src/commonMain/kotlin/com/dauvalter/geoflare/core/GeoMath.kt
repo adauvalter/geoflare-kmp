@@ -162,17 +162,21 @@ public object GeoMath {
         val latitudeSouth = max(-90.0, center.latitude - latDegrees)
         val longDegsNorth = metersToLongitudeDegrees(radiusMeters, latitudeNorth)
         val longDegsSouth = metersToLongitudeDegrees(radiusMeters, latitudeSouth)
-        val longDegs = max(longDegsNorth, longDegsSouth)
+        // A circle reaching a pole spans all longitudes. Sampling +/-360 would
+        // wrap both endpoints back to the center and omit the other hemisphere.
+        val longDegs = min(180.0, max(longDegsNorth, longDegsSouth))
+        val longitudeWest = if (longDegs == 180.0) -180.0 else wrapLongitude(center.longitude - longDegs)
+        val longitudeEast = if (longDegs == 180.0) 180.0 else wrapLongitude(center.longitude + longDegs)
         return listOf(
             GeoLocation(center.latitude, center.longitude),
-            GeoLocation(center.latitude, wrapLongitude(center.longitude - longDegs)),
-            GeoLocation(center.latitude, wrapLongitude(center.longitude + longDegs)),
+            GeoLocation(center.latitude, longitudeWest),
+            GeoLocation(center.latitude, longitudeEast),
             GeoLocation(latitudeNorth, center.longitude),
-            GeoLocation(latitudeNorth, wrapLongitude(center.longitude - longDegs)),
-            GeoLocation(latitudeNorth, wrapLongitude(center.longitude + longDegs)),
+            GeoLocation(latitudeNorth, longitudeWest),
+            GeoLocation(latitudeNorth, longitudeEast),
             GeoLocation(latitudeSouth, center.longitude),
-            GeoLocation(latitudeSouth, wrapLongitude(center.longitude - longDegs)),
-            GeoLocation(latitudeSouth, wrapLongitude(center.longitude + longDegs))
+            GeoLocation(latitudeSouth, longitudeWest),
+            GeoLocation(latitudeSouth, longitudeEast)
         )
     }
 }
