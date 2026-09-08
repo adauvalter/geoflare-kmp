@@ -76,7 +76,9 @@ public object GeoMath {
         val dLat = lat2 - lat1
         val dLon = lon2 - lon1
 
-        val a = sin(dLat / 2).pow(2) + cos(lat1) * cos(lat2) * sin(dLon / 2).pow(2)
+        // Roundoff near antipodes can otherwise make 1 - a negative.
+        val a = (sin(dLat / 2).pow(2) + cos(lat1) * cos(lat2) * sin(dLon / 2).pow(2))
+            .coerceIn(0.0, 1.0)
         val c = 2 * atan2(sqrt(a), sqrt(1 - a))
 
         return EARTH_RADIUS_KM * c
