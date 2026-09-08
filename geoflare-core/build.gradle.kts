@@ -6,13 +6,13 @@ plugins {
     alias(libs.plugins.vanniktech.mavenPublish)
 }
 
-group = "io.github.adauvalter.geoflare"
+group = "com.dauvalter.geoflare"
 version = "0.1.0"
 
 kotlin {
     jvm()
     androidLibrary {
-        namespace = "io.github.adauvalter.geoflare.core"
+        namespace = "com.dauvalter.geoflare.core"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
 
@@ -45,7 +45,12 @@ kotlin {
 mavenPublishing {
     publishToMavenCentral()
 
-    signAllPublications()
+    val hasSigningKey = project.hasProperty("signingInMemoryKey") ||
+        System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKey") != null ||
+        project.hasProperty("signing.keyId")
+    if (hasSigningKey) {
+        signAllPublications()
+    }
 
     coordinates(group.toString(), "geoflare-core", version.toString())
 

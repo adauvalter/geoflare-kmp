@@ -35,10 +35,10 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             // Pure geohashing and math (zero dependencies)
-            implementation("io.github.adauvalter.geoflare:geoflare-core:0.1.0")
+            implementation("com.dauvalter.geoflare:geoflare-core:0.1.0")
 
             // Firestore Coroutines & Flow integration
-            implementation("io.github.adauvalter.geoflare:geoflare-firestore:0.1.0")
+            implementation("com.dauvalter.geoflare:geoflare-firestore:0.1.0")
         }
     }
 }
@@ -51,8 +51,8 @@ kotlin {
 ### 1. Coordinates and Distance (`geoflare-core`)
 
 ```kotlin
-import io.github.adauvalter.geoflare.core.GeoLocation
-import io.github.adauvalter.geoflare.core.GeoMath
+import com.dauvalter.geoflare.core.GeoLocation
+import com.dauvalter.geoflare.core.GeoMath
 
 val sf = GeoLocation(latitude = 37.7749, longitude = -122.4194)
 val sj = GeoLocation(latitude = 37.3382, longitude = -121.8863)
@@ -65,7 +65,7 @@ val distanceMeters = GeoMath.distanceInMeters(sf, sj)
 ### 2. Geohash Encoding & Decoding (`geoflare-core`)
 
 ```kotlin
-import io.github.adauvalter.geoflare.core.GeohashUtils
+import com.dauvalter.geoflare.core.GeohashUtils
 
 // Encode coordinates to a geohash (default precision: 10 chars)
 val hash = GeohashUtils.encode(sf) // "9q8yyk8ytp"
@@ -84,8 +84,8 @@ Store a `geohash` field in your Firestore documents using `GeohashUtils.encode(l
 ```kotlin
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.firestore.firestore
-import io.github.adauvalter.geoflare.core.GeoLocation
-import io.github.adauvalter.geoflare.firestore.geoSnapshots
+import com.dauvalter.geoflare.core.GeoLocation
+import com.dauvalter.geoflare.firestore.geoSnapshots
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -120,7 +120,7 @@ nearbyPlacesFlow.collect { results ->
 ### 4. One-Shot Firestore Geo-queries (`geoflare-firestore`)
 
 ```kotlin
-import io.github.adauvalter.geoflare.firestore.geoGet
+import com.dauvalter.geoflare.firestore.geoGet
 
 // Suspending one-shot fetch (queries all ranges concurrently):
 val places: List<GeoQueryResult<Place>> = Firebase.firestore.collection("places")
@@ -136,8 +136,8 @@ val places: List<GeoQueryResult<Place>> = Firebase.firestore.collection("places"
 To drive map animations, sound/push alerts, or geo-fences, transform the snapshot flow into individual lifecycle events:
 
 ```kotlin
-import io.github.adauvalter.geoflare.firestore.GeoEvent
-import io.github.adauvalter.geoflare.firestore.asGeoEvents
+import com.dauvalter.geoflare.firestore.GeoEvent
+import com.dauvalter.geoflare.firestore.asGeoEvents
 
 nearbyPlacesFlow.asGeoEvents().collect { event ->
     when (event) {
@@ -159,8 +159,8 @@ nearbyPlacesFlow.asGeoEvents().collect { event ->
 Easily save or update coordinates and let GeoFlare compute and store the geohash:
 
 ```kotlin
-import io.github.adauvalter.geoflare.firestore.setGeoLocation
-import io.github.adauvalter.geoflare.firestore.updateGeoLocation
+import com.dauvalter.geoflare.firestore.setGeoLocation
+import com.dauvalter.geoflare.firestore.updateGeoLocation
 
 val location = GeoLocation(latitude = 37.7749, longitude = -122.4194)
 
@@ -178,7 +178,7 @@ Firebase.firestore.collection("places").document("cafe-1")
 When users pan or zoom an interactive map, pass a `Flow<GeoQueryCriteria>` to automatically switch range subscriptions on the fly:
 
 ```kotlin
-import io.github.adauvalter.geoflare.firestore.GeoQueryCriteria
+import com.dauvalter.geoflare.firestore.GeoQueryCriteria
 import kotlinx.coroutines.flow.MutableStateFlow
 
 val cameraCriteria = MutableStateFlow(GeoQueryCriteria(center = sf, radiusInKm = 5.0))
