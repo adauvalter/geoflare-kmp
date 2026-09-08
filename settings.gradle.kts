@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "multiplatform-library-template"
-include(":library")
+rootProject.name = "geoflare-kmp"
+include(":geoflare-core")
