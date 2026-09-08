@@ -9,12 +9,14 @@ import com.google.firebase.firestore.DocumentSnapshot as NativeDocumentSnapshot
 import com.google.firebase.firestore.QuerySnapshot as NativeQuerySnapshot
 
 /** Mock only the native transport layer; exercise real GitLive snapshot wrappers. */
-internal fun nativeDocument(path: String): NativeDocumentSnapshot {
+internal fun nativeDocument(path: String, data: Map<String, Any> = emptyMap()): NativeDocumentSnapshot {
     val reference = mock(NativeDocumentReference::class.java)
     `when`(reference.path).thenReturn(path)
     val document = mock(NativeDocumentSnapshot::class.java)
     `when`(document.id).thenReturn(path.substringAfterLast('/'))
     `when`(document.reference).thenReturn(reference)
+    `when`(document.exists()).thenReturn(true)
+    `when`(document.getData(NativeDocumentSnapshot.ServerTimestampBehavior.NONE)).thenReturn(data)
     return document
 }
 

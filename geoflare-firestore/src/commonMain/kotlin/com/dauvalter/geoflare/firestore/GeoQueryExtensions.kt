@@ -1,7 +1,6 @@
 package com.dauvalter.geoflare.firestore
 
 import dev.gitlive.firebase.firestore.DocumentSnapshot
-import dev.gitlive.firebase.firestore.Query
 import com.dauvalter.geoflare.core.GeoLocation
 import com.dauvalter.geoflare.core.GeohashUtils
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -11,8 +10,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 
 /**
  * Returns a real-time [Flow] of typed query results within [radiusInKm] of [center].
- * The receiver must be an unmodified collection reference. Use [geoQuery] for filters
- * or [geoCollectionGroup] for collection groups; preconfigured SDK queries are rejected.
  *
  * Automatically:
  * 1. Computes minimal geohash range bounds.
@@ -21,7 +18,7 @@ import kotlinx.coroutines.flow.flatMapLatest
  * 4. Calculates exact distance to [center] and filters out false positives outside [radiusInKm].
  * 5. Optionally sorts results by distance (closest first).
  */
-public inline fun <reified T : Any> Query.geoSnapshots(
+public inline fun <reified T : Any> GeoQuery.geoSnapshots(
     center: GeoLocation,
     radiusInKm: Double,
     geohashField: String = "geohash",
@@ -43,7 +40,7 @@ public inline fun <reified T : Any> Query.geoSnapshots(
 /**
  * Returns a real-time [Flow] of typed query results within [radiusInMeters] of [center].
  */
-public inline fun <reified T : Any> Query.geoSnapshotsInMeters(
+public inline fun <reified T : Any> GeoQuery.geoSnapshotsInMeters(
     center: GeoLocation,
     radiusInMeters: Double,
     geohashField: String = "geohash",
@@ -62,7 +59,7 @@ public inline fun <reified T : Any> Query.geoSnapshotsInMeters(
 /**
  * Returns a real-time [Flow] of raw [GeoDocumentSnapshot]s within [radiusInKm] of [center].
  */
-public fun Query.geoSnapshotsRaw(
+public fun GeoQuery.geoSnapshotsRaw(
     center: GeoLocation,
     radiusInKm: Double,
     geohashField: String = "geohash",
@@ -82,10 +79,8 @@ public fun Query.geoSnapshotsRaw(
 
 /**
  * One-shot query to fetch all typed documents within [radiusInKm] of [center].
- * The receiver must be an unmodified collection reference. Use [geoQuery] for filters
- * or [geoCollectionGroup] for collection groups; preconfigured SDK queries are rejected.
  */
-public suspend inline fun <reified T : Any> Query.geoGet(
+public suspend inline fun <reified T : Any> GeoQuery.geoGet(
     center: GeoLocation,
     radiusInKm: Double,
     geohashField: String = "geohash",
@@ -107,7 +102,7 @@ public suspend inline fun <reified T : Any> Query.geoGet(
 /**
  * One-shot query to fetch all typed documents within [radiusInMeters] of [center].
  */
-public suspend inline fun <reified T : Any> Query.geoGetInMeters(
+public suspend inline fun <reified T : Any> GeoQuery.geoGetInMeters(
     center: GeoLocation,
     radiusInMeters: Double,
     geohashField: String = "geohash",
@@ -126,7 +121,7 @@ public suspend inline fun <reified T : Any> Query.geoGetInMeters(
 /**
  * One-shot query to fetch raw [GeoDocumentSnapshot]s within [radiusInKm] of [center].
  */
-public suspend fun Query.geoGetRaw(
+public suspend fun GeoQuery.geoGetRaw(
     center: GeoLocation,
     radiusInKm: Double,
     geohashField: String = "geohash",
@@ -148,7 +143,7 @@ public suspend fun Query.geoGetRaw(
  * Returns a real-time [Flow] that dynamically updates query subscriptions whenever [criteriaFlow] emits.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-public inline fun <reified T : Any> Query.geoSnapshots(
+public inline fun <reified T : Any> GeoQuery.geoSnapshots(
     criteriaFlow: Flow<GeoQueryCriteria>,
     noinline locationExtractor: (T) -> GeoLocation
 ): Flow<List<GeoQueryResult<T>>> = criteriaFlow
@@ -169,7 +164,7 @@ public inline fun <reified T : Any> Query.geoSnapshots(
  * whenever [criteriaFlow] emits.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-public fun Query.geoSnapshotsRaw(
+public fun GeoQuery.geoSnapshotsRaw(
     criteriaFlow: Flow<GeoQueryCriteria>,
     locationExtractor: (DocumentSnapshot) -> GeoLocation
 ): Flow<List<GeoDocumentSnapshot>> = criteriaFlow
