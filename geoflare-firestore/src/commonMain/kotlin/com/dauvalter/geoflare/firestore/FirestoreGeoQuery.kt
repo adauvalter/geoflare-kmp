@@ -1,6 +1,7 @@
 package com.dauvalter.geoflare.firestore
 
 import dev.gitlive.firebase.firestore.DocumentSnapshot
+import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.Query
 import dev.gitlive.firebase.firestore.QuerySnapshot
 import com.dauvalter.geoflare.core.GeoLocation
@@ -19,7 +20,9 @@ public object FirestoreGeoQuery {
      * Builds a list of [Query] objects corresponding to the geohash bounding box ranges
      * that cover the circle defined by [center] and [radiusInKm].
      *
-     * @param baseQuery The starting query (e.g. collection reference or filtered query).
+     * @param baseQuery An unmodified collection reference. For filters and collection groups,
+     * use the [GeoQuery] overload. Arbitrary SDK queries are rejected because their ordering,
+     * limits and cursors cannot be inspected through the multiplatform API.
      * @param center The center coordinates.
      * @param radiusInKm The search radius in kilometers.
      * @param geohashField The document field containing the geohash string (defaults to "geohash").
@@ -32,10 +35,26 @@ public object FirestoreGeoQuery {
         geohashField: String = "geohash",
         geohashPrecision: Int = GeohashUtils.DEFAULT_PRECISION
     ): List<Query> {
+        require(baseQuery is CollectionReference) {
+            "Geo queries require an unmodified CollectionReference. Use collection.geoQuery().where { ... } " +
+                "or firestore.geoCollectionGroup(id) for filtered or collection-group queries; " +
+                "preconfigured orderBy, limits and cursors are not supported."
+        }
+        return buildGeohashQueries(baseQuery.geoQuery(), center, radiusInKm, geohashField, geohashPrecision)
+    }
+
+    /** Builds ranges from a source whose ordering and cursors are owned by GeoFlare. */
+    public fun buildGeohashQueries(
+        source: GeoQuery,
+        center: GeoLocation,
+        radiusInKm: Double,
+        geohashField: String = "geohash",
+        geohashPrecision: Int = GeohashUtils.DEFAULT_PRECISION
+    ): List<Query> {
         require(radiusInKm.isFinite() && radiusInKm >= 0.0) { "Radius must be finite and non-negative, got $radiusInKm" }
         val bounds = GeoQueryUtils.getGeohashQueryBounds(center, radiusInKm, geohashPrecision)
         return bounds.map { bound ->
-            baseQuery.orderBy(geohashField)
+            source.baseQuery.orderBy(geohashField)
                 .startAtFieldValues { add(bound.startAt) }
                 .endAtFieldValues { add(bound.endAt) }
         }

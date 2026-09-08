@@ -131,6 +131,30 @@ val places: List<GeoQueryResult<Place>> = Firebase.firestore.collection("places"
     )
 ```
 
+For additional filters, start from a collection with `geoQuery()`:
+
+```kotlin
+import com.dauvalter.geoflare.firestore.geoQuery
+import com.dauvalter.geoflare.firestore.geoCollectionGroup
+
+val cafes = Firebase.firestore.collection("places")
+    .geoQuery()
+    .where { "category" equalTo "cafe" }
+    .geoGet<Place>(center = center, radiusInKm = 5.0) { it.location }
+
+val allPlaces = Firebase.firestore.geoCollectionGroup("places")
+    .geoSnapshots<Place>(center = center, radiusInKm = 5.0) { it.location }
+```
+
+GeoFlare owns query ordering and cursors. Passing an already configured SDK
+`Query` (including `where`, `orderBy`, `limit`, or cursors) throws
+`IllegalArgumentException` before querying Firestore. Migrate
+`collection.where { ... }.geoGet(...)` to
+`collection.geoQuery().where { ... }.geoGet(...)`.
+For the nearest N documents, apply `take(N)` to the distance-sorted result list;
+a server-side limit on geohash candidates cannot guarantee nearest neighbors.
+Firestore index requirements still apply to your filters.
+
 ### 5. Granular Event Streaming (`asGeoEvents`)
 
 To drive map animations, sound/push alerts, or geo-fences, transform the snapshot flow into individual lifecycle events:
