@@ -131,6 +131,69 @@ val places: List<GeoQueryResult<Place>> = Firebase.firestore.collection("places"
     )
 ```
 
+### 5. Granular Event Streaming (`asGeoEvents`)
+
+To drive map animations, sound/push alerts, or geo-fences, transform the snapshot flow into individual lifecycle events:
+
+```kotlin
+import io.github.adauvalter.geoflare.firestore.GeoEvent
+import io.github.adauvalter.geoflare.firestore.asGeoEvents
+
+nearbyPlacesFlow.asGeoEvents().collect { event ->
+    when (event) {
+        is GeoEvent.Entered -> {
+            println("Entered radius: ${event.item.data.name} (${event.item.distanceInKm} km away)")
+        }
+        is GeoEvent.Moved -> {
+            println("Moved within radius: ${event.item.data.name} (now ${event.item.distanceInKm} km away)")
+        }
+        is GeoEvent.Exited -> {
+            println("Exited radius: document ID ${event.id}")
+        }
+    }
+}
+```
+
+### 6. Writing Locations with Automatic Geohash (`geoflare-firestore`)
+
+Easily save or update coordinates and let GeoFlare compute and store the geohash:
+
+```kotlin
+import io.github.adauvalter.geoflare.firestore.setGeoLocation
+import io.github.adauvalter.geoflare.firestore.updateGeoLocation
+
+val location = GeoLocation(latitude = 37.7749, longitude = -122.4194)
+
+// Saves geohash, latitude, and longitude (merged into document)
+Firebase.firestore.collection("places").document("cafe-1")
+    .setGeoLocation(location)
+
+// Update existing document coordinates
+Firebase.firestore.collection("places").document("cafe-1")
+    .updateGeoLocation(location)
+```
+
+### 7. Dynamic Camera / Search Criteria (`geoflare-firestore`)
+
+When users pan or zoom an interactive map, pass a `Flow<GeoQueryCriteria>` to automatically switch range subscriptions on the fly:
+
+```kotlin
+import io.github.adauvalter.geoflare.firestore.GeoQueryCriteria
+import kotlinx.coroutines.flow.MutableStateFlow
+
+val cameraCriteria = MutableStateFlow(GeoQueryCriteria(center = sf, radiusInKm = 5.0))
+
+// Automatically switches Firestore subscriptions whenever criteria changes:
+val mapPlacesFlow = Firebase.firestore.collection("places")
+    .geoSnapshots<Place>(
+        criteriaFlow = cameraCriteria,
+        locationExtractor = { it.location }
+    )
+
+// Later, when user pans the map or changes zoom:
+cameraCriteria.value = GeoQueryCriteria(center = newCenter, radiusInKm = 10.0)
+```
+
 ---
 
 ## Building and Testing

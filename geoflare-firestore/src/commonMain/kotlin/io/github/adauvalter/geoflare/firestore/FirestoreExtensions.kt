@@ -3,7 +3,10 @@ package io.github.adauvalter.geoflare.firestore
 import dev.gitlive.firebase.firestore.DocumentSnapshot
 import dev.gitlive.firebase.firestore.Query
 import io.github.adauvalter.geoflare.core.GeoLocation
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 
 /**
  * Returns a real-time [Flow] of typed query results within [radiusInKm] of [center].
@@ -127,3 +130,42 @@ public suspend fun Query.geoGetRaw(
         sortByDistance = sortByDistance
     )
 }
+
+/**
+ * Returns a real-time [Flow] that dynamically updates query subscriptions whenever [criteriaFlow] emits.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+public inline fun <reified T : Any> Query.geoSnapshots(
+    criteriaFlow: Flow<GeoQueryCriteria>,
+    noinline locationExtractor: (T) -> GeoLocation
+): Flow<List<GeoQueryResult<T>>> = criteriaFlow
+    .distinctUntilChanged()
+    .flatMapLatest { criteria ->
+        geoSnapshots(
+            center = criteria.center,
+            radiusInKm = criteria.radiusInKm,
+            geohashField = criteria.geohashField,
+            sortByDistance = criteria.sortByDistance,
+            locationExtractor = locationExtractor
+        )
+    }
+
+/**
+ * Returns a real-time [Flow] of raw [GeoDocumentSnapshot]s that dynamically updates query subscriptions
+ * whenever [criteriaFlow] emits.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+public fun Query.geoSnapshotsRaw(
+    criteriaFlow: Flow<GeoQueryCriteria>,
+    locationExtractor: (DocumentSnapshot) -> GeoLocation
+): Flow<List<GeoDocumentSnapshot>> = criteriaFlow
+    .distinctUntilChanged()
+    .flatMapLatest { criteria ->
+        geoSnapshotsRaw(
+            center = criteria.center,
+            radiusInKm = criteria.radiusInKm,
+            geohashField = criteria.geohashField,
+            sortByDistance = criteria.sortByDistance,
+            locationExtractor = locationExtractor
+        )
+    }
