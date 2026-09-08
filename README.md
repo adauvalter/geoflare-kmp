@@ -35,10 +35,10 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             // Pure geohashing and math (zero dependencies)
-            implementation("com.dauvalter.geoflare:geoflare-core:0.1.0")
+            implementation("com.dauvalter.geoflare:geoflare-core:0.2.0")
 
             // Firestore Coroutines & Flow integration
-            implementation("com.dauvalter.geoflare:geoflare-firestore:0.1.0")
+            implementation("com.dauvalter.geoflare:geoflare-firestore:0.2.0")
         }
     }
 }
