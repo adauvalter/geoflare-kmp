@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.vanniktech.mavenPublish)
 }
 
-group = "io.github.adauvalter.geoflare"
+group = "com.dauvalter.geoflare"
 version = "0.1.0"
 
 kotlin {
@@ -17,7 +17,7 @@ kotlin {
         }
     }
     androidLibrary {
-        namespace = "io.github.adauvalter.geoflare.firestore"
+        namespace = "com.dauvalter.geoflare.firestore"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
 
@@ -65,7 +65,12 @@ tasks.withType<org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest
 mavenPublishing {
     publishToMavenCentral()
 
-    signAllPublications()
+    val hasSigningKey = project.hasProperty("signingInMemoryKey") ||
+        System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKey") != null ||
+        project.hasProperty("signing.keyId")
+    if (hasSigningKey) {
+        signAllPublications()
+    }
 
     coordinates(group.toString(), "geoflare-firestore", version.toString())
 
