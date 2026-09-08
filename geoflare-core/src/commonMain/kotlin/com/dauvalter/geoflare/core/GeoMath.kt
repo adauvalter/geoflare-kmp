@@ -111,14 +111,21 @@ public object GeoMath {
      * Calculates the bits necessary to reach a given resolution in meters for the longitude at a given latitude.
      */
     public fun longitudeBitsForResolution(resolutionMeters: Double, latitude: Double): Double {
+        require(resolutionMeters.isFinite() && resolutionMeters >= 0.0) { "Resolution must be finite and non-negative" }
         val degs = metersToLongitudeDegrees(resolutionMeters, latitude)
-        return if (abs(degs) > 0.000001) max(1.0, log2(360.0 / degs)) else 1.0
+        // Zero (including underflow) needs the finest supported cell, not half the world.
+        return if (degs > 0.0) {
+            log2(360.0 / degs).coerceIn(1.0, MAXIMUM_BITS_PRECISION.toDouble())
+        } else {
+            MAXIMUM_BITS_PRECISION.toDouble()
+        }
     }
 
     /**
      * Calculates the bits necessary to reach a given resolution in meters for the latitude.
      */
     public fun latitudeBitsForResolution(resolutionMeters: Double): Double {
+        require(resolutionMeters.isFinite() && resolutionMeters >= 0.0) { "Resolution must be finite and non-negative" }
         return min(log2(EARTH_MERI_CIRCUMFERENCE / 2.0 / resolutionMeters), MAXIMUM_BITS_PRECISION.toDouble())
     }
 
@@ -157,6 +164,7 @@ public object GeoMath {
      * is guaranteed to be a prefix of any geohash within the circle.
      */
     public fun boundingBoxCoordinates(center: GeoLocation, radiusMeters: Double): List<GeoLocation> {
+        require(radiusMeters.isFinite() && radiusMeters >= 0.0) { "Radius must be finite and non-negative" }
         val latDegrees = radiusMeters / METERS_PER_DEGREE_LATITUDE
         val latitudeNorth = min(90.0, center.latitude + latDegrees)
         val latitudeSouth = max(-90.0, center.latitude - latDegrees)
