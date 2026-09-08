@@ -6,13 +6,13 @@ plugins {
     alias(libs.plugins.vanniktech.mavenPublish)
 }
 
-group = "io.github.kotlin"
-version = "1.0.0"
+group = "io.github.adauvalter.geoflare"
+version = "0.1.0"
 
 kotlin {
     jvm()
     androidLibrary {
-        namespace = "org.jetbrains.kotlinx.multiplatform.library.template"
+        namespace = "io.github.adauvalter.geoflare.core"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
 
@@ -28,11 +28,12 @@ kotlin {
     }
     iosArm64()
     iosSimulatorArm64()
+    iosX64()
     linuxX64()
 
     sourceSets {
         commonMain.dependencies {
-            //put your multiplatform dependencies here
+            // zero external dependencies
         }
 
         commonTest.dependencies {
@@ -46,31 +47,31 @@ mavenPublishing {
 
     signAllPublications()
 
-    coordinates(group.toString(), "library", version.toString())
+    coordinates(group.toString(), "geoflare-core", version.toString())
 
     pom {
-        name = "My library"
-        description = "A library."
-        inceptionYear = "2024"
-        url = "https://github.com/kotlin/multiplatform-library-template/"
+        name = "GeoFlare Core"
+        description = "Pure Kotlin Multiplatform library for geospatial queries and geohashing"
+        inceptionYear = "2026"
+        url = "https://github.com/adauvalter/geoflare-kmp"
         licenses {
             license {
-                name = "XXX"
-                url = "YYY"
-                distribution = "ZZZ"
+                name = "Apache-2.0"
+                url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+                distribution = "repo"
             }
         }
         developers {
             developer {
-                id = "XXX"
-                name = "YYY"
-                url = "ZZZ"
+                id = "adauvalter"
+                name = "Anton Dauwalter"
+                url = "https://github.com/adauvalter"
             }
         }
         scm {
-            url = "XXX"
-            connection = "YYY"
-            developerConnection = "ZZZ"
+            url = "https://github.com/adauvalter/geoflare-kmp"
+            connection = "scm:git:git://github.com/adauvalter/geoflare-kmp.git"
+            developerConnection = "scm:git:ssh://github.com:adauvalter/geoflare-kmp.git"
         }
     }
 }
