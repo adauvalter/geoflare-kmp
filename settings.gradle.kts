@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "geoflare-kmp"
 include(":geoflare-core")
+include(":geoflare-firestore")

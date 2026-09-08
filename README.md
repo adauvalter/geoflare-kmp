@@ -10,35 +10,35 @@ Unlike traditional GeoFire libraries tightly coupled to a single SDK or legacy c
 
 ---
 
-## Architecture
-
-GeoFlare is designed as a multi-module KMP library:
+## Modules
 
 * **`geoflare-core`**: Pure Kotlin Multiplatform module with **zero external dependencies**. Handles Base32 Geohash encoding/decoding (Z-order space-filling curve), Haversine distance calculations, WGS84 geodesy, and bounding box query bounds math.
-* **`geoflare-firestore`** *(in development)*: Seamless integration with Cloud Firestore using Kotlin Coroutines and `Flow`, providing real-time geo-queries and client-side false-positive distance filtering.
+* **`geoflare-firestore`**: Seamless integration with Cloud Firestore using Kotlin Coroutines and `Flow`, powered by the GitLive Firebase SDK (`dev.gitlive:firebase-firestore`). Provides real-time geo-queries, parallel fetching, deduplication, and automatic client-side distance filtering.
 
 ---
 
 ## Supported Platforms
 
-* **JVM** (Java 11+)
-* **Android** (minSdk 24)
-* **iOS** (`iosArm64`, `iosSimulatorArm64`, `iosX64`)
-* **Linux** (`linuxX64`)
+| Module | JVM | Android | iOS | Linux |
+| :--- | :---: | :---: | :---: | :---: |
+| **`geoflare-core`** | ✅ | ✅ | ✅ (`arm64`, `simulatorArm64`, `x64`) | ✅ (`x64`) |
+| **`geoflare-firestore`** | ✅ | ✅ | ✅ (`arm64`, `simulatorArm64`, `x64`) | — |
 
 ---
 
-## Getting Started
+## Installation
 
-### Gradle Dependency
-
-Add `geoflare-core` to your `commonMain` dependencies in `build.gradle.kts`:
+Add the dependencies to your `commonMain` source set in `build.gradle.kts`:
 
 ```kotlin
 kotlin {
     sourceSets {
         commonMain.dependencies {
+            // Pure geohashing and math (zero dependencies)
             implementation("io.github.adauvalter.geoflare:geoflare-core:0.1.0")
+
+            // Firestore Coroutines & Flow integration
+            implementation("io.github.adauvalter.geoflare:geoflare-firestore:0.1.0")
         }
     }
 }
@@ -46,9 +46,9 @@ kotlin {
 
 ---
 
-## Quick Example (`geoflare-core`)
+## Quick Start
 
-### 1. Coordinates and Distance
+### 1. Coordinates and Distance (`geoflare-core`)
 
 ```kotlin
 import io.github.adauvalter.geoflare.core.GeoLocation
@@ -62,7 +62,7 @@ val distanceKm = GeoMath.distance(sf, sj)       // ~67.8 km
 val distanceMeters = GeoMath.distanceInMeters(sf, sj)
 ```
 
-### 2. Geohash Encoding & Decoding
+### 2. Geohash Encoding & Decoding (`geoflare-core`)
 
 ```kotlin
 import io.github.adauvalter.geoflare.core.GeohashUtils
@@ -70,58 +70,72 @@ import io.github.adauvalter.geoflare.core.GeohashUtils
 // Encode coordinates to a geohash (default precision: 10 chars)
 val hash = GeohashUtils.encode(sf) // "9q8yyk8ytp"
 
-// Encode with custom precision (1 to 22)
+// Encode with custom precision (1 to 22 chars)
 val shortHash = GeohashUtils.encode(sf, precision = 5) // "9q8yy"
 
 // Decode back to approximate coordinates
 val location = GeohashUtils.decode(hash)
 ```
 
-### 3. Calculating Query Bounds
+### 3. Real-time Firestore Geo-queries (`geoflare-firestore`)
 
-To query points within a radius (e.g. 5 km around a center), compute the bounding geohash ranges:
+Store a `geohash` field in your Firestore documents using `GeohashUtils.encode(location)`. Then query reactively:
 
 ```kotlin
-import io.github.adauvalter.geoflare.core.GeoQueryUtils
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.firestore.firestore
+import io.github.adauvalter.geoflare.core.GeoLocation
+import io.github.adauvalter.geoflare.firestore.geoSnapshots
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class Place(
+    val name: String,
+    val geohash: String,
+    val latitude: Double,
+    val longitude: Double
+) {
+    val location: GeoLocation get() = GeoLocation(latitude, longitude)
+}
 
 val center = GeoLocation(latitude = 37.7749, longitude = -122.4194)
-val bounds = GeoQueryUtils.getGeohashQueryBounds(center, radiusInKm = 5.0)
 
-// Each bound provides [startAt, endAt] strings to query your database
-for (bound in bounds) {
-    println("Range: ${bound.startAt} .. ${bound.endAt}")
+// Real-time Flow of nearby places with automatic distance calculation & filtering:
+val nearbyPlacesFlow = Firebase.firestore.collection("places")
+    .geoSnapshots<Place>(
+        center = center,
+        radiusInKm = 5.0,
+        geohashField = "geohash", // default
+        sortByDistance = true,     // default
+        locationExtractor = { it.location }
+    )
+
+nearbyPlacesFlow.collect { results ->
+    for (result in results) {
+        println("${result.data.name} is ${result.distanceInKm} km away")
+    }
 }
 ```
 
-### Target Usage with Database Queries (e.g. Firestore)
+### 4. One-Shot Firestore Geo-queries (`geoflare-firestore`)
 
 ```kotlin
-// 1. Generate query bounds
-val bounds = GeoQueryUtils.getGeohashQueryBounds(center, radiusInKm = 5.0)
+import io.github.adauvalter.geoflare.firestore.geoGet
 
-// 2. Query each range in your database
-val queries = bounds.map { bound ->
-    firestore.collection("places")
-        .orderBy("geohash")
-        .startAt(bound.startAt)
-        .endAt(bound.endAt)
-        .snapshots() // Flow<QuerySnapshot>
-}
-
-// 3. Merge flows and filter points outside the exact circle
-val nearbyPlacesFlow = merge(*queries.toTypedArray()).map { snapshot ->
-    snapshot.map { it.data<Place>() }
-        .filter { place ->
-            GeoMath.distance(center, place.location) <= 5.0
-        }
-}
+// Suspending one-shot fetch (queries all ranges concurrently):
+val places: List<GeoQueryResult<Place>> = Firebase.firestore.collection("places")
+    .geoGet<Place>(
+        center = center,
+        radiusInKm = 5.0,
+        locationExtractor = { it.location }
+    )
 ```
 
 ---
 
 ## Building and Testing
 
-To build the library and run tests across all supported targets:
+To build the library and run tests across all modules and targets:
 
 ```bash
 ./gradlew check
