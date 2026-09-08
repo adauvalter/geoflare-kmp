@@ -28,7 +28,10 @@ public sealed interface GeoEvent<T> {
     public data class Exited<T>(
         public val id: String,
         public val lastItem: GeoQueryResult<T>
-    ) : GeoEvent<T>
+    ) : GeoEvent<T> {
+        /** Full document path; use this rather than [id] to identify collection-group results. */
+        public val key: String get() = lastItem.key
+    }
 }
 
 /**
@@ -53,7 +56,7 @@ public fun <T> Flow<List<GeoQueryResult<T>>>.asGeoEventBatches(): Flow<GeoEventB
     var previousMap = emptyMap<String, GeoQueryResult<T>>()
 
     collect { currentList ->
-        val currentMap = currentList.associateBy { it.id }
+        val currentMap = currentList.associateBy { it.key }
 
         val entered = mutableListOf<GeoQueryResult<T>>()
         val moved = mutableListOf<Pair<GeoQueryResult<T>, GeoQueryResult<T>>>()
@@ -90,7 +93,7 @@ public fun <T> Flow<List<GeoQueryResult<T>>>.asGeoEvents(): Flow<GeoEvent<T>> = 
     var previousMap = emptyMap<String, GeoQueryResult<T>>()
 
     collect { currentList ->
-        val currentMap = currentList.associateBy { it.id }
+        val currentMap = currentList.associateBy { it.key }
 
         for ((id, currentItem) in currentMap) {
             val previousItem = previousMap[id]
@@ -103,7 +106,7 @@ public fun <T> Flow<List<GeoQueryResult<T>>>.asGeoEvents(): Flow<GeoEvent<T>> = 
 
         for ((id, previousItem) in previousMap) {
             if (id !in currentMap) {
-                emit(GeoEvent.Exited(id, previousItem))
+                emit(GeoEvent.Exited(previousItem.id, previousItem))
             }
         }
 

@@ -119,4 +119,13 @@ class GeoEventsTest {
             assertFailsWith<IllegalArgumentException> { criteria.copy(geohashPrecision = precision) }
         }
     }
+
+    @Test
+    fun copiedSyntheticResultsDeriveIdentityFromTheirCurrentId() = runTest {
+        val first = GeoQueryResult(Place("Cafe"), 1.0, id = "a")
+        val second = first.copy(id = "b")
+        assertEquals("b", second.key)
+        val events = flowOf(listOf(first, second)).asGeoEvents().toList()
+        assertEquals(listOf("a", "b"), events.filterIsInstance<GeoEvent.Entered<Place>>().map { it.item.key })
+    }
 }

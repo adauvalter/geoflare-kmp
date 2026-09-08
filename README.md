@@ -154,6 +154,11 @@ nearbyPlacesFlow.asGeoEvents().collect { event ->
 }
 ```
 
+Use `result.key` (the full document path) as the identity for map markers and
+collection-group results. `result.id` remains the short Firestore document ID
+for compatibility. Exit events expose `event.key` as well. Results constructed
+without a snapshot use `id` as their key, including after `copy(id = ...)`.
+
 ### 6. Writing Locations with Automatic Geohash (`geoflare-firestore`)
 
 Easily save or update coordinates and let GeoFlare compute and store the geohash:
