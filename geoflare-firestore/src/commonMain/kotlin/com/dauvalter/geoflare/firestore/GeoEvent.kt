@@ -51,6 +51,8 @@ public data class GeoEventBatch<T>(
 
 /**
  * Transforms a stream of query snapshot lists into a stream of batched [GeoEventBatch] events.
+ * Compares data using [Any.equals] and distance; snapshot instances and metadata are ignored.
+ * Use immutable data with value equality to suppress unchanged results.
  */
 public fun <T> Flow<List<GeoQueryResult<T>>>.asGeoEventBatches(): Flow<GeoEventBatch<T>> = flow {
     var previousMap = emptyMap<String, GeoQueryResult<T>>()
@@ -66,7 +68,7 @@ public fun <T> Flow<List<GeoQueryResult<T>>>.asGeoEventBatches(): Flow<GeoEventB
             val previousItem = previousMap[id]
             if (previousItem == null) {
                 entered.add(currentItem)
-            } else if (previousItem != currentItem) {
+            } else if (previousItem.data != currentItem.data || previousItem.distanceInKm != currentItem.distanceInKm) {
                 moved.add(currentItem to previousItem)
             }
         }
@@ -88,6 +90,8 @@ public fun <T> Flow<List<GeoQueryResult<T>>>.asGeoEventBatches(): Flow<GeoEventB
 
 /**
  * Transforms a stream of query snapshot lists into a stream of individual [GeoEvent] events.
+ * Compares data using [Any.equals] and distance; snapshot instances and metadata are ignored.
+ * Use immutable data with value equality to suppress unchanged results.
  */
 public fun <T> Flow<List<GeoQueryResult<T>>>.asGeoEvents(): Flow<GeoEvent<T>> = flow {
     var previousMap = emptyMap<String, GeoQueryResult<T>>()
@@ -99,7 +103,7 @@ public fun <T> Flow<List<GeoQueryResult<T>>>.asGeoEvents(): Flow<GeoEvent<T>> = 
             val previousItem = previousMap[id]
             if (previousItem == null) {
                 emit(GeoEvent.Entered(currentItem))
-            } else if (previousItem != currentItem) {
+            } else if (previousItem.data != currentItem.data || previousItem.distanceInKm != currentItem.distanceInKm) {
                 emit(GeoEvent.Moved(currentItem, previousItem))
             }
         }
