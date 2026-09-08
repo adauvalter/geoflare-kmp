@@ -162,7 +162,7 @@ public object FirestoreGeoQuery {
         }
         val filtered = GeoFilterUtils.filterAndDeduplicate(
             items = allItems,
-            idExtractor = { (doc, _) -> doc.id },
+            idExtractor = { (doc, _) -> doc.reference.path },
             locationExtractor = { (_, data) -> locationExtractor(data) },
             center = center,
             radiusInKm = radiusInKm,
@@ -184,7 +184,7 @@ public object FirestoreGeoQuery {
         val allDocs = snapshotsArray.flatMap { it.documents }
         val filtered = GeoFilterUtils.filterAndDeduplicate(
             items = allDocs,
-            idExtractor = { it.id },
+            idExtractor = { it.reference.path },
             locationExtractor = locationExtractor,
             center = center,
             radiusInKm = radiusInKm,

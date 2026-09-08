@@ -9,6 +9,7 @@ import dev.gitlive.firebase.firestore.DocumentSnapshot
  * @property distanceInKm The calculated distance from the query center in kilometers.
  * @property snapshot The underlying Firestore [DocumentSnapshot] (if available).
  * @property id The document identifier.
+ * @property key Full document path used for deduplication and events; defaults to [id] for synthetic results.
  */
 public data class GeoQueryResult<T>(
     public val data: T,
@@ -16,6 +17,10 @@ public data class GeoQueryResult<T>(
     public val snapshot: DocumentSnapshot? = null,
     public val id: String = snapshot?.id ?: ""
 ) {
+    /** Derived on access so copying a synthetic result with a new ID also updates its key. */
+    public val key: String
+        get() = snapshot?.reference?.path ?: id
+
     /**
      * The calculated distance from the query center in meters.
      */
@@ -44,4 +49,8 @@ public data class GeoDocumentSnapshot(
      */
     public val id: String
         get() = snapshot.id
+
+    /** Full document path, unique within the queried database. */
+    public val key: String
+        get() = snapshot.reference.path
 }

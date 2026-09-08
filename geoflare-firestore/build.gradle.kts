@@ -51,6 +51,10 @@ kotlin {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
         }
+
+        jvmTest.dependencies {
+            implementation("org.mockito:mockito-core:5.20.0")
+        }
     }
 }
 
