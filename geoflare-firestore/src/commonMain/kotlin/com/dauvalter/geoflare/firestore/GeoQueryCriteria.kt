@@ -20,7 +20,7 @@ public data class GeoQueryCriteria(
     public val geohashPrecision: Int = GeohashUtils.DEFAULT_PRECISION
 ) {
     init {
-        require(radiusInKm >= 0.0) { "Radius must be non-negative, got $radiusInKm" }
+        require(radiusInKm.isFinite() && radiusInKm >= 0.0) { "Radius must be finite and non-negative, got $radiusInKm" }
         require(geohashPrecision in 1..GeohashUtils.MAX_PRECISION) { "Invalid geohash precision: $geohashPrecision" }
     }
 

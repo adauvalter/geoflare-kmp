@@ -32,7 +32,7 @@ public object FirestoreGeoQuery {
         geohashField: String = "geohash",
         geohashPrecision: Int = GeohashUtils.DEFAULT_PRECISION
     ): List<Query> {
-        require(radiusInKm >= 0.0) { "Radius must be non-negative, got $radiusInKm" }
+        require(radiusInKm.isFinite() && radiusInKm >= 0.0) { "Radius must be finite and non-negative, got $radiusInKm" }
         val bounds = GeoQueryUtils.getGeohashQueryBounds(center, radiusInKm, geohashPrecision)
         return bounds.map { bound ->
             baseQuery.orderBy(geohashField)

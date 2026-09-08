@@ -50,7 +50,7 @@ public object GeoQueryUtils {
         radiusInMeters: Double,
         geohashPrecision: Int = GeohashUtils.DEFAULT_PRECISION
     ): List<GeohashRange> {
-        require(radiusInMeters >= 0.0) { "Radius must be non-negative, got $radiusInMeters" }
+        require(radiusInMeters.isFinite() && radiusInMeters >= 0.0) { "Radius must be finite and non-negative, got $radiusInMeters" }
         require(geohashPrecision in 1..GeohashUtils.MAX_PRECISION) { "Invalid geohash precision: $geohashPrecision" }
         val queryBits = max(1, GeoMath.boundingBoxBits(center, radiusInMeters))
             .coerceAtMost(geohashPrecision * GeoMath.BITS_PER_CHAR)
