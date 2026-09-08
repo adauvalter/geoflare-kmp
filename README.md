@@ -173,6 +173,13 @@ Firebase.firestore.collection("places").document("cafe-1")
     .updateGeoLocation(location)
 ```
 
+Write helpers store 10-character geohashes by default. Queries use the same default
+and cap their bounds to that precision, including for submeter radii. If you store
+shorter hashes with `precision`, pass the same value as `geohashPrecision` to
+`geoGet`, `geoSnapshots`, their raw/meter variants, or `GeoQueryCriteria`.
+For mixed lengths, use the shortest stored length. Distance filtering still uses
+the original coordinates; shorter hashes increase the number of candidate reads.
+
 ### 7. Dynamic Camera / Search Criteria (`geoflare-firestore`)
 
 When users pan or zoom an interactive map, pass a `Flow<GeoQueryCriteria>` to automatically switch range subscriptions on the fly:

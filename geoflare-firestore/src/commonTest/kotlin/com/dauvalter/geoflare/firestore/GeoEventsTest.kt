@@ -108,4 +108,15 @@ class GeoEventsTest {
             GeoQueryCriteria(loc, radiusInKm = -0.1)
         }
     }
+
+    @Test
+    fun criteriaPreserveAndValidateStoredGeohashPrecision() {
+        val center = GeoLocation(37.7749, -122.4194)
+        val criteria = GeoQueryCriteria.inMeters(center, 0.1, geohashPrecision = 4)
+        assertEquals(4, criteria.geohashPrecision)
+        assertNotEquals(criteria, criteria.copy(geohashPrecision = 10))
+        for (precision in listOf(0, 23)) {
+            assertFailsWith<IllegalArgumentException> { criteria.copy(geohashPrecision = precision) }
+        }
+    }
 }

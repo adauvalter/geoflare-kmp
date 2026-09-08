@@ -14,6 +14,7 @@ public object GeoQueryUtils {
      */
     public fun geohashQuery(geohash: String, bits: Int): GeohashRange {
         GeohashUtils.validateGeohash(geohash)
+        require(bits in 1..GeoMath.MAXIMUM_BITS_PRECISION) { "Bits must be in 1..${GeoMath.MAXIMUM_BITS_PRECISION}" }
         val precision = ceil(bits.toDouble() / GeoMath.BITS_PER_CHAR).toInt()
         if (geohash.length < precision) {
             return GeohashRange(geohash, "$geohash~")
@@ -41,18 +42,22 @@ public object GeoQueryUtils {
      *
      * @param center The center coordinates.
      * @param radiusInMeters The radius in meters.
+     * @param geohashPrecision Minimum length of the stored geohashes. Longer hashes are also covered.
      * @return List of unique [GeohashRange] bounds.
      */
     public fun getGeohashQueryBoundsInMeters(
         center: GeoLocation,
-        radiusInMeters: Double
+        radiusInMeters: Double,
+        geohashPrecision: Int = GeohashUtils.DEFAULT_PRECISION
     ): List<GeohashRange> {
         require(radiusInMeters >= 0.0) { "Radius must be non-negative, got $radiusInMeters" }
+        require(geohashPrecision in 1..GeohashUtils.MAX_PRECISION) { "Invalid geohash precision: $geohashPrecision" }
         val queryBits = max(1, GeoMath.boundingBoxBits(center, radiusInMeters))
-        val geohashPrecision = ceil(queryBits.toDouble() / GeoMath.BITS_PER_CHAR).toInt()
+            .coerceAtMost(geohashPrecision * GeoMath.BITS_PER_CHAR)
+        val queryPrecision = ceil(queryBits.toDouble() / GeoMath.BITS_PER_CHAR).toInt()
         val coordinates = GeoMath.boundingBoxCoordinates(center, radiusInMeters)
         val queries = coordinates.map { coord ->
-            geohashQuery(GeohashUtils.encode(coord, geohashPrecision), queryBits)
+            geohashQuery(GeohashUtils.encode(coord, queryPrecision), queryBits)
         }
         return queries.distinct()
     }
@@ -62,12 +67,14 @@ public object GeoQueryUtils {
      *
      * @param center The center coordinates.
      * @param radiusInKm The radius in kilometers.
+     * @param geohashPrecision Minimum length of the stored geohashes.
      * @return List of unique [GeohashRange] bounds.
      */
     public fun getGeohashQueryBounds(
         center: GeoLocation,
-        radiusInKm: Double
+        radiusInKm: Double,
+        geohashPrecision: Int = GeohashUtils.DEFAULT_PRECISION
     ): List<GeohashRange> {
-        return getGeohashQueryBoundsInMeters(center, radiusInKm * 1000.0)
+        return getGeohashQueryBoundsInMeters(center, radiusInKm * 1000.0, geohashPrecision)
     }
 }

@@ -3,6 +3,7 @@ package com.dauvalter.geoflare.firestore
 import dev.gitlive.firebase.firestore.DocumentSnapshot
 import dev.gitlive.firebase.firestore.Query
 import com.dauvalter.geoflare.core.GeoLocation
+import com.dauvalter.geoflare.core.GeohashUtils
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -23,9 +24,10 @@ public inline fun <reified T : Any> Query.geoSnapshots(
     radiusInKm: Double,
     geohashField: String = "geohash",
     sortByDistance: Boolean = true,
+    geohashPrecision: Int = GeohashUtils.DEFAULT_PRECISION,
     noinline locationExtractor: (T) -> GeoLocation
 ): Flow<List<GeoQueryResult<T>>> {
-    val queries = FirestoreGeoQuery.buildGeohashQueries(this, center, radiusInKm, geohashField)
+    val queries = FirestoreGeoQuery.buildGeohashQueries(this, center, radiusInKm, geohashField, geohashPrecision)
     return FirestoreGeoQuery.combineGeoSnapshots(
         queries = queries,
         center = center,
@@ -44,12 +46,14 @@ public inline fun <reified T : Any> Query.geoSnapshotsInMeters(
     radiusInMeters: Double,
     geohashField: String = "geohash",
     sortByDistance: Boolean = true,
+    geohashPrecision: Int = GeohashUtils.DEFAULT_PRECISION,
     noinline locationExtractor: (T) -> GeoLocation
 ): Flow<List<GeoQueryResult<T>>> = geoSnapshots(
     center = center,
     radiusInKm = radiusInMeters / 1000.0,
     geohashField = geohashField,
     sortByDistance = sortByDistance,
+    geohashPrecision = geohashPrecision,
     locationExtractor = locationExtractor
 )
 
@@ -61,9 +65,10 @@ public fun Query.geoSnapshotsRaw(
     radiusInKm: Double,
     geohashField: String = "geohash",
     sortByDistance: Boolean = true,
+    geohashPrecision: Int = GeohashUtils.DEFAULT_PRECISION,
     locationExtractor: (DocumentSnapshot) -> GeoLocation
 ): Flow<List<GeoDocumentSnapshot>> {
-    val queries = FirestoreGeoQuery.buildGeohashQueries(this, center, radiusInKm, geohashField)
+    val queries = FirestoreGeoQuery.buildGeohashQueries(this, center, radiusInKm, geohashField, geohashPrecision)
     return FirestoreGeoQuery.combineGeoDocumentSnapshots(
         queries = queries,
         center = center,
@@ -81,9 +86,10 @@ public suspend inline fun <reified T : Any> Query.geoGet(
     radiusInKm: Double,
     geohashField: String = "geohash",
     sortByDistance: Boolean = true,
+    geohashPrecision: Int = GeohashUtils.DEFAULT_PRECISION,
     noinline locationExtractor: (T) -> GeoLocation
 ): List<GeoQueryResult<T>> {
-    val queries = FirestoreGeoQuery.buildGeohashQueries(this, center, radiusInKm, geohashField)
+    val queries = FirestoreGeoQuery.buildGeohashQueries(this, center, radiusInKm, geohashField, geohashPrecision)
     return FirestoreGeoQuery.geoGet(
         queries = queries,
         center = center,
@@ -102,12 +108,14 @@ public suspend inline fun <reified T : Any> Query.geoGetInMeters(
     radiusInMeters: Double,
     geohashField: String = "geohash",
     sortByDistance: Boolean = true,
+    geohashPrecision: Int = GeohashUtils.DEFAULT_PRECISION,
     noinline locationExtractor: (T) -> GeoLocation
 ): List<GeoQueryResult<T>> = geoGet(
     center = center,
     radiusInKm = radiusInMeters / 1000.0,
     geohashField = geohashField,
     sortByDistance = sortByDistance,
+    geohashPrecision = geohashPrecision,
     locationExtractor = locationExtractor
 )
 
@@ -119,9 +127,10 @@ public suspend fun Query.geoGetRaw(
     radiusInKm: Double,
     geohashField: String = "geohash",
     sortByDistance: Boolean = true,
+    geohashPrecision: Int = GeohashUtils.DEFAULT_PRECISION,
     locationExtractor: (DocumentSnapshot) -> GeoLocation
 ): List<GeoDocumentSnapshot> {
-    val queries = FirestoreGeoQuery.buildGeohashQueries(this, center, radiusInKm, geohashField)
+    val queries = FirestoreGeoQuery.buildGeohashQueries(this, center, radiusInKm, geohashField, geohashPrecision)
     return FirestoreGeoQuery.geoGetRaw(
         queries = queries,
         center = center,
@@ -146,6 +155,7 @@ public inline fun <reified T : Any> Query.geoSnapshots(
             radiusInKm = criteria.radiusInKm,
             geohashField = criteria.geohashField,
             sortByDistance = criteria.sortByDistance,
+            geohashPrecision = criteria.geohashPrecision,
             locationExtractor = locationExtractor
         )
     }
@@ -166,6 +176,7 @@ public fun Query.geoSnapshotsRaw(
             radiusInKm = criteria.radiusInKm,
             geohashField = criteria.geohashField,
             sortByDistance = criteria.sortByDistance,
+            geohashPrecision = criteria.geohashPrecision,
             locationExtractor = locationExtractor
         )
     }
