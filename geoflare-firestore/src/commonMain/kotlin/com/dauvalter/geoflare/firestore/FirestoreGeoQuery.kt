@@ -5,6 +5,7 @@ import dev.gitlive.firebase.firestore.Query
 import dev.gitlive.firebase.firestore.QuerySnapshot
 import com.dauvalter.geoflare.core.GeoLocation
 import com.dauvalter.geoflare.core.GeoQueryUtils
+import com.dauvalter.geoflare.core.GeohashUtils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -22,15 +23,17 @@ public object FirestoreGeoQuery {
      * @param center The center coordinates.
      * @param radiusInKm The search radius in kilometers.
      * @param geohashField The document field containing the geohash string (defaults to "geohash").
+     * @param geohashPrecision Minimum length of the stored geohashes.
      */
     public fun buildGeohashQueries(
         baseQuery: Query,
         center: GeoLocation,
         radiusInKm: Double,
-        geohashField: String = "geohash"
+        geohashField: String = "geohash",
+        geohashPrecision: Int = GeohashUtils.DEFAULT_PRECISION
     ): List<Query> {
         require(radiusInKm >= 0.0) { "Radius must be non-negative, got $radiusInKm" }
-        val bounds = GeoQueryUtils.getGeohashQueryBounds(center, radiusInKm)
+        val bounds = GeoQueryUtils.getGeohashQueryBounds(center, radiusInKm, geohashPrecision)
         return bounds.map { bound ->
             baseQuery.orderBy(geohashField)
                 .startAtFieldValues { add(bound.startAt) }
